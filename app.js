@@ -1,0 +1,58 @@
+//jshint esversion:6
+const express=require("express");
+const https=require("https");
+const request=require("request");
+const app=express();
+app.use(express.static("public"));
+
+const bodyParser=require("body-parser");
+app.use(bodyParser.urlencoded({extended:true}));
+
+app.get("/",function(req,res){
+  res.sendFile(__dirname+"/signup.html");
+});
+
+app.post("/",function(req,res){
+  const query=req.body.fn;
+  const a=req.body.sn;
+  const b=req.body.em;
+  const data={
+    members:[
+      {
+        email_address:b,
+        status:"subscribed",
+        merge_fields:{
+          FNAME:query,
+          LNAME:a
+        }
+      }
+    ]
+  };
+
+  const x= JSON.stringify(data);
+  const url="https://us17.api.mailchimp.com/3.0/lists/ecd7028d0d";
+  const options={
+    method:"POST",
+    auth:"Shreyas:b4609bbdcb3ccea7344c9fc149b1f3f5-us17"
+  };
+  const request=https.request(url,options,function(response){
+    if(response.statusCode===200)
+    {
+      res.sendFile(__dirname+"/success.html");
+    }
+    else{
+      res.sendFile(__dirname+"/failure.html");
+    }
+    response.on("data",function(data){
+    console.log(JSON.parse(data));
+    });
+  });
+request.write(x);
+request.end();
+});
+app.post("/failure",function(req,res){
+  res.redirect("/");
+});
+app.listen(process.env.PORT || 3000,function(){
+  console.log("hello");
+});
